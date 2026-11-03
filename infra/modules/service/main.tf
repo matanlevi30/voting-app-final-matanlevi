@@ -1,7 +1,5 @@
 # Resources of one service: log group, task definition, ECS service
 
-data "aws_region" "current" {}
-
 locals {
   port_mappings = var.container_port == null ? [] : [
     { containerPort = var.container_port, protocol = "tcp" }
@@ -34,7 +32,7 @@ resource "aws_ecs_task_definition" "this" {
         logDriver = "awslogs"
         options = {
           awslogs-group         = aws_cloudwatch_log_group.this.name
-          awslogs-region        = data.aws_region.current.name
+          awslogs-region        = var.region
           awslogs-stream-prefix = var.container_name
         }
       }

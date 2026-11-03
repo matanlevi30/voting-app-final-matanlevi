@@ -1,1 +1,49 @@
-# The pipeline (contracts P1-P11). Fill it in. Until it has on: and jobs:, GitHub shows it as an invalid workflow
+name: deploy
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "services/**"
+      - "infra/**"
+      - ".github/workflows/**"
+  push:
+    branches: [main]
+    paths:
+      - "services/**"
+      - "infra/**"
+      - ".github/workflows/**"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-north-1
+  TF_VERSION: "1.16.6"
+
+jobs:
+  checks:
+    name: checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: terraform fmt
+        run: terraform fmt -check -recursive -no-color
+
+      - name: terraform init (no backend)
+        run: terraform init -backend=false -input=false -no-color
+
+      - name: terraform validate
+        run: terraform validate -no-color

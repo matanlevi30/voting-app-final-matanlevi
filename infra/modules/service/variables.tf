@@ -40,6 +40,11 @@ variable "desired_count" {
   type        = number
 }
 
+variable "region" {
+  description = "AWS region, for the awslogs driver"
+  type        = string
+}
+
 variable "cpu" {
   description = "CPU units"
   type        = number

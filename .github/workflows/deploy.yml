@@ -98,3 +98,37 @@ jobs:
           tags: ${{ steps.ecr.outputs.registry }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  # Pull Request: plan dev and prod. Never apply.
+  plan:
+    name: plan
+    if: github.event_name == 'pull_request'
+    needs: checks
+    strategy:
+      matrix:
+        env: [dev, prod]
+    uses: ./.github/workflows/terraform.yml
+    with:
+      env: ${{ matrix.env }}
+      mode: plan
+      image_tag: ${{ github.sha }}
+
+  # Push to main: dev by itself, then prod after a human approves
+  deploy-dev:
+    name: dev
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    uses: ./.github/workflows/terraform.yml
+    with:
+      env: dev
+      mode: deploy
+      image_tag: ${{ github.sha }}
+
+  deploy-prod:
+    name: prod
+    needs: deploy-dev
+    uses: ./.github/workflows/terraform.yml
+    with:
+      env: prod
+      mode: deploy
+      image_tag: ${{ github.sha }}
